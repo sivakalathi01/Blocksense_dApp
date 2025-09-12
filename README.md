@@ -1,6 +1,68 @@
 # 🔮 Blocksense Price Feed dApp
 
-A decentralized application (dApp) that demonstrates how to use [Blocksense](https://docs.blocksense.network) price feeds on Aurora (Testnet & Mainnet). This dApp provides real-time price data for various token pairs using Blocksense's decentralized oracle infrastructure.
+A comprehensive decentralized application that showcases integration with [Blocksense](https://docs.blocksense.network) price feeds on Aurora blockchain. This dApp provides real-time price data for various token pairs using Blocksense's decentralized oracle infrastructure.
+
+## 📋 Repository Description
+
+A decentralized application (dApp) that demonstrates how to use Blocksense price feeds on Aurora blockchain. Features multi-network support (Testnet & Mainnet), MetaMask integration, real-time price data fetching, and a modern React frontend with network switching capabilities.
+
+## 🏷️ Repository Topics & Tags
+
+`blockchain` `dapp` `aurora` `blocksense` `price-feeds` `ethereum` `solidity` `react` `web3` `defi` `oracle` `hardhat` `typescript` `metamask` `evm` `smart-contracts` `decentralized` `price-oracle` `aurora-testnet` `aurora-mainnet`
+
+## ✨ Key Features
+
+• **Multi-network support** (Aurora Testnet & Mainnet)
+• **Real-time price feeds** for ETH/USDC, AURORA/USDC, ETH/AURORA
+• **MetaMask wallet integration** with automatic network switching
+• **Network switching capabilities** between Testnet and Mainnet
+• **Modern React frontend** with responsive design
+• **Smart contract deployment scripts** for both networks
+• **Comprehensive error handling** and debugging tools
+• **Test data handling** with clear warnings for Aurora Testnet
+• **Price formatting** with proper decimal handling
+• **Contract verification** and testing utilities
+
+## 🛠️ Tech Stack
+
+• **Frontend**: React, TypeScript, Vite, Ethers.js, CSS3
+• **Backend**: Solidity, Hardhat, Node.js
+• **Blockchain**: Aurora (EVM-compatible)
+• **Oracle**: Blocksense price feeds
+• **Wallet**: MetaMask integration
+• **Development**: Git, npm, TypeScript
+
+## 🎯 Perfect For
+
+• Learning Web3 development
+• Understanding oracle integrations
+• Aurora blockchain development
+• Price feed implementations
+• dApp architecture examples
+• Smart contract deployment
+• Frontend-backend integration
+• Multi-network dApp development
+
+## 🚀 Current Status
+
+✅ **Fully Functional dApp**
+- Contract deployed to Aurora Testnet: `0xEB73ECd9d1A6e52781fb258947d5b74a7F32ec2f`
+- Frontend running on `http://localhost:3000`
+- Price feeds working with test data
+- MetaMask integration complete
+- Network switching functional
+
+⚠️ **Test Data Notice**
+- Aurora Testnet uses mock data for price feeds
+- All prices show test values with "(Test Data)" warning
+- Real market data available on Aurora Mainnet with actual Blocksense addresses
+
+## 📊 Live Demo
+
+The dApp is currently running and accessible at:
+- **Local Development**: `http://localhost:3000`
+- **Network**: Aurora Testnet (Chain ID: 0x4e454153)
+- **Status**: ✅ Fully operational with test data
 
 ## 🌟 Features
 

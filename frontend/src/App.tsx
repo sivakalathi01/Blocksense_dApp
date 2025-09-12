@@ -53,7 +53,7 @@ interface PriceData {
 
 function App() {
   const [account, setAccount] = useState<string>('');
-  const [contractAddress, setContractAddress] = useState<string>('0xEB73ECd9d1A6e52781fb258947d5b74a7F32ec2f');
+  const [contractAddress, setContractAddress] = useState<string>('0xEeC71DF7453614b5EcaB9514FAA523d1C554Ad15');
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
@@ -64,8 +64,8 @@ function App() {
 
   // Contract addresses for different networks
   const CONTRACT_ADDRESSES = {
-    testnet: '0x3B77e4E8782b6033DF4a967F3Ed77726648457eF', // Aurora Testnet
-    mainnet: '0x0000000000000000000000000000000000000000' // Aurora Mainnet (placeholder - needs deployment)
+    testnet: '0xEeC71DF7453614b5EcaB9514FAA523d1C554Ad15', // Aurora Testnet (Real Price Consumer)
+    mainnet: '0x0000000000000000000000000000000000000000' // Aurora Mainnet (needs deployment with ETH)
   };
 
   // Token addresses for different networks
@@ -74,20 +74,23 @@ function App() {
       ETH: '0x0000000000000000000000000000000000000000', // Native ETH on Aurora
       USDC: '0x901fb725c106E182614105335ad0E230c91B67C8', // Official USDC on Aurora Testnet
       USDT: '0x4988a896b1227218e4A686fdE5EabdcAbd91571f',
-      AURORA: '0x8BEc47865aDe3B172A928df8f990Bc7f2A3b9f79'
+      NEAR: '0x1111111111111111111111111111111111111111', // Placeholder address for NEAR
+      BTC: '0x2222222222222222222222222222222222222222'   // Placeholder address for BTC
     },
     mainnet: {
       ETH: '0x0000000000000000000000000000000000000000', // Native ETH on Aurora
       USDC: '0xB12BFcA5A3cC1B8426150C3db9C31B2055C76515', // Official USDC on Aurora Mainnet
       USDT: '0x4988a896b1227218e4A686fdE5EabdcAbd91571f', // Same as testnet
-      AURORA: '0x8BEc47865aDe3B172A928df8f990Bc7f2A3b9f79' // Same as testnet
+      NEAR: '0x1111111111111111111111111111111111111111', // Placeholder address for NEAR
+      BTC: '0x2222222222222222222222222222222222222222'   // Placeholder address for BTC
     }
   };
 
   const PRICE_PAIRS = [
     { name: 'ETH/USDC', base: TOKENS[selectedNetwork].ETH, quote: TOKENS[selectedNetwork].USDC },
-    { name: 'AURORA/USDC', base: TOKENS[selectedNetwork].AURORA, quote: TOKENS[selectedNetwork].USDC },
-    { name: 'ETH/AURORA', base: TOKENS[selectedNetwork].ETH, quote: TOKENS[selectedNetwork].AURORA }
+    { name: 'USDT/USDC', base: TOKENS[selectedNetwork].USDT, quote: TOKENS[selectedNetwork].USDC },
+    { name: 'NEAR/USDC', base: TOKENS[selectedNetwork].NEAR, quote: TOKENS[selectedNetwork].USDC },
+    { name: 'BTC/USDC', base: TOKENS[selectedNetwork].BTC, quote: TOKENS[selectedNetwork].USDC }
   ];
 
   // Debug: Log token addresses
@@ -96,7 +99,8 @@ function App() {
   console.log('ETH:', TOKENS[selectedNetwork].ETH);
   console.log('USDC:', TOKENS[selectedNetwork].USDC);
   console.log('USDT:', TOKENS[selectedNetwork].USDT);
-  console.log('AURORA:', TOKENS[selectedNetwork].AURORA);
+  console.log('NEAR:', TOKENS[selectedNetwork].NEAR);
+  console.log('BTC:', TOKENS[selectedNetwork].BTC);
   console.log('============================');
 
   useEffect(() => {
@@ -252,6 +256,7 @@ function App() {
       setError('');
       setSelectedNetwork('testnet');
       setContractAddress(CONTRACT_ADDRESSES.testnet);
+      console.log('Switching to Aurora Testnet with contract:', CONTRACT_ADDRESSES.testnet);
       
       console.log('Attempting to switch to Aurora Testnet...');
       
@@ -302,6 +307,7 @@ function App() {
       setError('');
       setSelectedNetwork('mainnet');
       setContractAddress(CONTRACT_ADDRESSES.mainnet);
+      console.log('Switching to Aurora Mainnet with contract:', CONTRACT_ADDRESSES.mainnet);
       
       console.log('Attempting to switch to Aurora Mainnet...');
       
@@ -429,18 +435,29 @@ function App() {
     }
 
     const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+    const currentChainIdDecimal = parseInt(chainId, 16);
     console.log('Current chain ID:', chainId);
-    console.log('Expected chain ID: 0x4e454153 (Aurora Testnet)');
-    console.log('Chain ID match:', chainId === '0x4e454153');
+    console.log('Current chain ID (decimal):', currentChainIdDecimal);
+    console.log('Expected Testnet chain ID: 0x4e454153 (1313161555)');
+    console.log('Expected Mainnet chain ID: 0x4e4542a2 (1313161890)');
     
-    if (chainId !== '0x4e454153') { // Aurora Testnet
-      setError(`Please switch to Aurora Testnet. Current: ${chainId}, Expected: 0x4e454153`);
+    // Accept both Aurora Testnet and Mainnet
+    if (currentChainIdDecimal !== 1313161555 && currentChainIdDecimal !== 1313161890) {
+      setError(`Please switch to Aurora Testnet or Mainnet. Current: ${chainId} (${currentChainIdDecimal}), Expected: 0x4e454153 (1313161555) or 0x4e4542a2 (1313161890)`);
       return;
     }
     
+    console.log('✅ Network check passed - you are on Aurora!');
+    
     // Also check the contract address
     console.log('Contract address being used:', contractAddress);
-    console.log('Expected contract address: 0xEB73ECd9d1A6e52781fb258947d5b74a7F32ec2f');
+    console.log('Expected contract address: 0xEeC71DF7453614b5EcaB9514FAA523d1C554Ad15');
+    
+    // Check if contract address is zero (not deployed)
+    if (contractAddress === '0x0000000000000000000000000000000000000000') {
+      setError(`Contract not deployed on Aurora Mainnet. Please switch to Aurora Testnet or deploy the contract to Mainnet first. Current network: ${chainId} (${currentChainIdDecimal})`);
+      return;
+    }
     
     // Test if contract exists at this address
     try {
@@ -449,12 +466,18 @@ function App() {
         params: [contractAddress, 'latest']
       });
       console.log('Contract code at address:', code);
-      if (code === '0x') {
-        throw new Error('No contract found at this address');
+      console.log('Contract code length:', code.length);
+      
+      if (code === '0x' || code.length < 10) {
+        console.error('❌ No contract found at this address');
+        setError(`Contract not found at address ${contractAddress}. Please check the network and address. Current network: ${chainId} (${currentChainIdDecimal})`);
+        return;
+      } else {
+        console.log('✅ Contract found at address');
       }
     } catch (error) {
       console.error('Contract verification failed:', error);
-      setError(`Contract not found at address ${contractAddress}. Please check the network and address.`);
+      setError(`Failed to verify contract at address ${contractAddress}. Error: ${error.message}`);
       return;
     }
 
@@ -513,15 +536,15 @@ function App() {
             const numericPrice6 = parseFloat(formattedPrice6);
             console.log('Method 4 - Using 6 decimals:', formattedPrice6, '→', numericPrice6);
             
-            // For Aurora Testnet, use 8 decimals as it's the most common for price feeds
-            // The test data shows all feeds return the same value, so we'll use 8 decimals
+            // Use 8 decimals as it's the standard for price feeds
             let finalPrice = numericPrice8;
             console.log('Using 8 decimals (standard for price feeds)');
             
-            // If this is test data (all prices are the same), show a warning
+            // Check if this is realistic price data
             if (numericPrice8 > 100000) {
-              finalPrice = numericPrice8;
               console.log('Note: This appears to be test data from Aurora Testnet');
+            } else {
+              console.log('Note: This appears to be realistic price data');
             }
             
             console.log('Final price:', finalPrice);
@@ -535,9 +558,11 @@ function App() {
               displayPrice = `$${finalPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
             }
             
-            // Add note for test data
+            // Add note for test data (only if price is unrealistically high)
             if (finalPrice > 100000) {
               displayPrice += ' (Test Data)';
+            } else {
+              displayPrice += ' (Realistic Data)';
             }
             
             newPrices.push({

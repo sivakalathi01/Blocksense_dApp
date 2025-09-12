@@ -25,7 +25,8 @@ contract BlocksensePriceConsumer {
     address public constant ETH = address(0); // Native ETH on Aurora
     address public constant USDC = 0x901fb725c106E182614105335ad0E230c91B67C8; // Official USDC on Aurora Testnet
     address public constant USDT = 0x4988a896b1227218e4A686fdE5EabdcAbd91571f;
-    address public constant AURORA = 0x8BEc47865aDe3B172A928df8f990Bc7f2A3b9f79;
+    address public constant NEAR = 0x1111111111111111111111111111111111111111; // Placeholder address for NEAR
+    address public constant BTC = 0x2222222222222222222222222222222222222222;  // Placeholder address for BTC
     
     // Events
     event PriceUpdated(
@@ -72,10 +73,12 @@ contract BlocksensePriceConsumer {
             // Return different test values based on token pair
             if (base == address(0) && quote == 0x901fb725c106E182614105335ad0E230c91B67C8) {
                 return (11437715515959, 0, block.timestamp); // ETH/USDC
-            } else if (base == 0x8BEc47865aDe3B172A928df8f990Bc7f2A3b9f79 && quote == 0x901fb725c106E182614105335ad0E230c91B67C8) {
-                return (12345678901234, 0, block.timestamp); // AURORA/USDC
-            } else if (base == address(0) && quote == 0x8BEc47865aDe3B172A928df8f990Bc7f2A3b9f79) {
-                return (98765432109876, 0, block.timestamp); // ETH/AURORA
+            } else if (base == 0x4988a896b1227218e4A686fdE5EabdcAbd91571f && quote == 0x901fb725c106E182614105335ad0E230c91B67C8) {
+                return (12345678901234, 0, block.timestamp); // USDT/USDC
+            } else if (base == 0x1111111111111111111111111111111111111111 && quote == 0x901fb725c106E182614105335ad0E230c91B67C8) {
+                return (98765432109876, 0, block.timestamp); // NEAR/USDC (placeholder address)
+            } else if (base == 0x2222222222222222222222222222222222222222 && quote == 0x901fb725c106E182614105335ad0E230c91B67C8) {
+                return (55555555555555, 0, block.timestamp); // BTC/USDC (placeholder address)
             } else {
                 return (11437715515959, 0, block.timestamp); // Default
             }
@@ -212,18 +215,26 @@ contract BlocksensePriceConsumer {
     }
     
     /**
-     * @notice Get AURORA/USDC price
-     * @return price The latest AURORA/USDC price
+     * @notice Get USDT/USDC price
+     * @return price The latest USDT/USDC price
      */
-    function getAURORAUSDPrice() external view returns (int256 price) {
-        (price, , ) = getLatestPrice(AURORA, USDC);
+    function getUSDTUSDPrice() external view returns (int256 price) {
+        (price, , ) = getLatestPrice(USDT, USDC);
     }
     
     /**
-     * @notice Get ETH/AURORA price
-     * @return price The latest ETH/AURORA price
+     * @notice Get NEAR/USDC price
+     * @return price The latest NEAR/USDC price
      */
-    function getETHAURORAPrice() external view returns (int256 price) {
-        (price, , ) = getLatestPrice(ETH, AURORA);
+    function getNEARUSDPrice() external view returns (int256 price) {
+        (price, , ) = getLatestPrice(NEAR, USDC);
+    }
+    
+    /**
+     * @notice Get BTC/USDC price
+     * @return price The latest BTC/USDC price
+     */
+    function getBTCUSDPrice() external view returns (int256 price) {
+        (price, , ) = getLatestPrice(BTC, USDC);
     }
 }

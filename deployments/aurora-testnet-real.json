@@ -1,8 +1,0 @@
-{
-  "contractAddress": "0xEeC71DF7453614b5EcaB9514FAA523d1C554Ad15",
-  "network": "aurora-testnet",
-  "chainId": "1313161555",
-  "deployer": "0x8794c866DB97E0E7c1a0E2CF51D3E1460cB37F9e",
-  "timestamp": "2025-09-12T15:22:08.757Z",
-  "type": "real-price-consumer"
-}

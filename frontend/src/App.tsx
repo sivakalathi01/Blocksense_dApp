@@ -2,14 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import './index.css';
 
-// Contract ABI - This would normally be imported from the compiled contract
+// Contract ABI - Updated for BlocksenseIntegration contract
 const CONTRACT_ABI = [
-  "function feedRegistry() view returns (address)",
-  "function getFeedRegistry() view returns (address)",
-  "function getLatestPrice(address base, address quote) view returns (int256 price, uint8 decimals, uint256 timestamp)",
+  "function getLatestPrice(address base, address quote) view returns (int256 price, uint8 decimals, uint256 timestamp, string source)",
   "function getETHUSDPrice() view returns (int256)",
-  "function getAURORAUSDPrice() view returns (int256)",
-  "function getETHAURORAPrice() view returns (int256)"
+  "function getUSDTUSDPrice() view returns (int256)",
+  "function getNEARUSDPrice() view returns (int256)",
+  "function getBTCUSDPrice() view returns (int256)",
+  "function isUsingRealBlocksense() view returns (bool)",
+  "function getBlocksenseRegistry() view returns (address)",
+  "function getFeedAddresses() view returns (address ethUsdc, address usdtUsdc, address nearUsdc, address btcUsdc)"
 ];
 
 // Aurora Testnet configuration
@@ -49,6 +51,7 @@ interface PriceData {
   price: string;
   timestamp: string;
   exists: boolean;
+  source?: string;
 }
 
 function App() {
@@ -64,7 +67,7 @@ function App() {
 
   // Contract addresses for different networks
   const CONTRACT_ADDRESSES = {
-    testnet: '0xEeC71DF7453614b5EcaB9514FAA523d1C554Ad15', // Aurora Testnet (Real Price Consumer)
+    testnet: '0xE86b1d0e2C8b26213c0eb93C4B6C1d3C56e7692d', // BlocksenseIntegration on Aurora Testnet
     mainnet: '0x0000000000000000000000000000000000000000' // Aurora Mainnet (needs deployment with ETH)
   };
 
@@ -74,8 +77,8 @@ function App() {
       ETH: '0x0000000000000000000000000000000000000000', // Native ETH on Aurora
       USDC: '0x901fb725c106E182614105335ad0E230c91B67C8', // Official USDC on Aurora Testnet
       USDT: '0x4988a896b1227218e4A686fdE5EabdcAbd91571f',
-      NEAR: '0x1111111111111111111111111111111111111111', // Placeholder address for NEAR
-      BTC: '0x2222222222222222222222222222222222222222'   // Placeholder address for BTC
+      NEAR: '0x3333333333333333333333333333333333333333', // Placeholder address for NEAR
+      BTC: '0x4444444444444444444444444444444444444444'   // Placeholder address for BTC
     },
     mainnet: {
       ETH: '0x0000000000000000000000000000000000000000', // Native ETH on Aurora
@@ -383,17 +386,88 @@ function App() {
       // Wait for provider to be ready
       await provider.ready;
       
+      // Create a backup RPC provider for contract checks
+      const rpcProvider = new ethers.JsonRpcProvider('https://testnet.aurora.dev');
+      
       console.log('Provider ready, creating contract instance...');
+      console.log('Contract Address:', contractAddress);
+      console.log('ABI Length:', CONTRACT_ABI.length);
+      
+      // Debug network information
+      try {
+        const network = await provider.getNetwork();
+        console.log('🌐 Network Information:');
+        console.log('  Chain ID:', network.chainId.toString());
+        console.log('  Network Name:', network.name);
+        console.log('  Expected Chain ID: 1313161555 (Aurora Testnet)');
+        
+        if (network.chainId.toString() !== '1313161555') {
+          console.warn('⚠️  Warning: Not connected to Aurora Testnet!');
+          console.warn('   Current Chain ID:', network.chainId.toString());
+          console.warn('   Expected Chain ID: 1313161555');
+        } else {
+          console.log('✅ Connected to Aurora Testnet');
+        }
+      } catch (networkError) {
+        console.error('❌ Error getting network info:', networkError);
+      }
+      
       const contractInstance = new ethers.Contract(contractAddress, CONTRACT_ABI, provider);
+      console.log('Contract instance created:', contractInstance);
       
       // Test the contract by calling getLatestPrice function
       console.log('Testing contract connection...');
+      
+      // First check if contract exists
+      console.log('Checking contract existence at:', contractAddress);
+      
+      // Additional debugging
       try {
-        const [price, decimals, timestamp] = await contractInstance.getLatestPrice(
+        const blockNumber = await provider.getBlockNumber();
+        console.log('Current block number:', blockNumber);
+      } catch (blockError) {
+        console.error('❌ Error getting block number:', blockError.message);
+      }
+      
+      // Try MetaMask provider first
+      let code = await provider.getCode(contractAddress);
+      console.log('MetaMask provider code length:', code.length);
+      
+      if (code === '0x') {
+        console.log('🔄 MetaMask provider failed, trying direct RPC...');
+        try {
+          code = await rpcProvider.getCode(contractAddress);
+          console.log('RPC provider code length:', code.length);
+          
+          if (code === '0x') {
+            console.error('❌ Contract not found via both providers');
+            console.error('❌ This could be due to:');
+            console.error('   1. Wrong network - make sure you\'re on Aurora Testnet');
+            console.error('   2. Wrong contract address');
+            console.error('   3. Network connectivity issues');
+            throw new Error('Contract not found at address ' + contractAddress);
+          } else {
+            console.log('✅ Contract found via direct RPC - using RPC provider for contract calls');
+            // Use RPC provider for contract instance
+            const contractInstance = new ethers.Contract(contractAddress, CONTRACT_ABI, rpcProvider);
+            setContract(contractInstance);
+            setSuccess('Contract loaded successfully via RPC provider!');
+            return;
+          }
+        } catch (rpcError) {
+          console.error('❌ RPC provider also failed:', rpcError.message);
+          throw new Error('Contract not found at address ' + contractAddress);
+        }
+      }
+      console.log('✅ Contract found via MetaMask provider');
+      
+      try {
+        const [price, decimals, timestamp, source] = await contractInstance.getLatestPrice(
           '0x0000000000000000000000000000000000000000', // ETH
           '0x901fb725c106E182614105335ad0E230c91B67C8'  // USDC
         );
         console.log('Contract test successful - Price:', price.toString());
+        console.log('Source:', source);
         console.log('Decimals:', decimals);
         console.log('Timestamp:', timestamp.toString());
       } catch (error) {
@@ -459,21 +533,30 @@ function App() {
       return;
     }
     
-    // Test if contract exists at this address
+    // Test if contract exists at this address using the same fallback mechanism
     try {
-      const code = await window.ethereum.request({
-        method: 'eth_getCode',
-        params: [contractAddress, 'latest']
-      });
-      console.log('Contract code at address:', code);
-      console.log('Contract code length:', code.length);
+      // Create providers for contract check
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const rpcProvider = new ethers.JsonRpcProvider('https://testnet.aurora.dev');
       
-      if (code === '0x' || code.length < 10) {
-        console.error('❌ No contract found at this address');
-        setError(`Contract not found at address ${contractAddress}. Please check the network and address. Current network: ${chainId} (${currentChainIdDecimal})`);
-        return;
+      // Try MetaMask provider first
+      let code = await provider.getCode(contractAddress);
+      console.log('MetaMask provider code length:', code.length);
+      
+      if (code === '0x') {
+        console.log('🔄 MetaMask provider failed, trying direct RPC...');
+        code = await rpcProvider.getCode(contractAddress);
+        console.log('RPC provider code length:', code.length);
+        
+        if (code === '0x') {
+          console.error('❌ No contract found at this address via both providers');
+          setError(`Contract not found at address ${contractAddress}. Please check the network and address. Current network: ${chainId} (${currentChainIdDecimal})`);
+          return;
+        } else {
+          console.log('✅ Contract found via direct RPC');
+        }
       } else {
-        console.log('✅ Contract found at address');
+        console.log('✅ Contract found via MetaMask provider');
       }
     } catch (error) {
       console.error('Contract verification failed:', error);
@@ -503,8 +586,22 @@ function App() {
             throw new Error('getLatestPrice is not a function');
           }
           
-          // Get the latest price
-          const [price, decimals, timestamp] = await contract.getLatestPrice(pair.base, pair.quote);
+          // Get the latest price (now returns 4 values: price, decimals, timestamp, source)
+          const result = await contract.getLatestPrice(pair.base, pair.quote);
+          console.log('Raw contract result:', result);
+          console.log('Result type:', typeof result);
+          console.log('Result length:', result.length);
+          
+          const price = result[0];
+          const decimals = result[1];
+          const timestamp = result[2];
+          const source = result[3];
+          
+          console.log('Extracted values:');
+          console.log('Price:', price);
+          console.log('Decimals:', decimals);
+          console.log('Timestamp:', timestamp);
+          console.log('Source:', source);
             
             // Debug logging
             console.log(`=== ${pair.name} Price Debug ===`);
@@ -558,8 +655,12 @@ function App() {
               displayPrice = `$${finalPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
             }
             
-            // Add note for test data (only if price is unrealistically high)
-            if (finalPrice > 100000) {
+            // Add source information
+            if (source && source.includes('Blocksense')) {
+              displayPrice += ' (Real Blocksense Data)';
+            } else if (source && source.includes('Simulated')) {
+              displayPrice += ' (Simulated Data)';
+            } else if (finalPrice > 100000) {
               displayPrice += ' (Test Data)';
             } else {
               displayPrice += ' (Realistic Data)';
@@ -569,15 +670,22 @@ function App() {
               pair: pair.name,
               price: displayPrice,
               timestamp: new Date(Number(timestamp) * 1000).toLocaleString(),
-              exists: true
+              exists: true,
+              source: source || 'Unknown'
             });
         } catch (error) {
           console.error(`Error fetching price for ${pair.name}:`, error);
+          console.error('Error details:', {
+            message: error.message,
+            stack: error.stack,
+            name: error.name
+          });
           newPrices.push({
             pair: pair.name,
             price: `Error: ${error.message}`,
             timestamp: 'N/A',
-            exists: false
+            exists: false,
+            source: 'Error'
           });
         }
       }
@@ -721,6 +829,14 @@ function App() {
 
       {contract && (
         <div className="card">
+          <h2>Blocksense Integration Status</h2>
+          <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f8f9fa', border: '1px solid #dee2e6', borderRadius: '8px' }}>
+            <p><strong>🔗 Contract:</strong> {contractAddress}</p>
+            <p><strong>🌐 Network:</strong> {selectedNetwork === 'testnet' ? 'Aurora Testnet' : 'Aurora Mainnet'}</p>
+            <p><strong>📊 Data Source:</strong> Real Blocksense Integration</p>
+            <p><strong>✅ Status:</strong> Ready to fetch real-time price data</p>
+          </div>
+          
           <h2>Price Feeds</h2>
           <p>Fetch real-time price data from Blocksense feeds:</p>
           <button 

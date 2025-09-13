@@ -1,0 +1,10 @@
+{
+  "network": "siva-kalathi-virtual-chain",
+  "chainId": 1313161890,
+  "contractAddress": "0xE81287aaf66FA335D0a2437876043AA71098d7C4",
+  "contractName": "BlocksenseIntegrationVirtual",
+  "deploymentTime": "2025-09-13T17:18:34.082Z",
+  "rpcUrl": "https://0x4e4542a2.rpc.aurora-cloud.dev",
+  "explorerUrl": "https://0x4e4542a2.explorer.aurora-cloud.dev",
+  "gasPrice": "1000000000000"
+}

@@ -8,6 +8,7 @@
     "test": "hardhat test",
     "deploy:aurora": "hardhat run scripts/deploy.ts --network auroraTestnet",
     "deploy:aurora-mainnet": "hardhat run scripts/deploy.ts --network auroraMainnet",
+    "deploy:virtual-chain": "hardhat run scripts/deploy-virtual-chain.ts --network vgas_chain",
     "test:contract": "hardhat run scripts/test-contract.ts --network auroraTestnet",
     "frontend:dev": "cd frontend && vite",
     "frontend:build": "cd frontend && vite build",
